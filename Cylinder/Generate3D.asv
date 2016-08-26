@@ -1,0 +1,86 @@
+%code to calculate the bilinear interpolation of the Qext spec
+ParamArr(105,41,3) = 0; %1=peak loc, 2=gamma, 3=ampl.
+for i = 1:1:3
+for d = 24:1:76
+   for h = 80:1:120
+       if (d>=50)&&((h/10)>=10)
+          %upper right quadrant
+          %x1=50,y1=10,x2=63,y2=11
+          factor = 1/(13*1);
+          ParamArr(d,h,i) = factor ...
+               *(Params(2,2,i)*(63-d)*(11-(h/10)) ...
+               + Params(3,2,i)*(d-50)*(11-(h/10)) ...
+               + Params(2,3,i)*(63-d)*((h/10)-10) ...
+               + Params(3,3,i)*(d-50)*((h/10)-10));
+       end
+            
+       if (d>=50)&&((h/10)<10)
+           %lower right quadrant
+           %x1=50,y1=10,x2=62,y2=9
+           factor = 1/(13*(-1));
+           ParamArr(d,h,i) = factor ...
+               *(Params(2,2,i)*(62-d)*(9-(h/10)) ...
+               + Params(3,2,i)*(d-50)*(9-(h/10)) ...
+               + Params(2,1,i)*(62-d)*((h/10)-10) ...
+               + Params(3,1,i)*(d-50)*((h/10)-10));
+       end
+            
+       if (d<50)&&((h/10)>=10)
+           %upper left quadrant
+           %x1=50,y1=10,x2=37,y2=11
+           factor = 1/(-13*1);
+           ParamArr(d,h,i) = factor ...
+               *(Params(2,2,i)*(37-d)*(11-(h/10)) ...
+               + Params(1,2,i)*(d-50)*(11-(h/10)) ...
+               + Params(2,3,i)*(37-d)*((h/10)-10) ...
+               + Params(1,3,i)*(d-50)*((h/10)-10));
+       end
+       
+       if (d<50)&&((h/10)<10)
+           %lower left quadrant
+           %x1=50,y1=10,x2=37,y2=9
+           factor = 1/13;
+           ParamArr(d,h,i) = factor ...
+               *(Params(2,2,i)*(37-d)*(9-(h/10)) ...
+               + Params(1,2,i)*(d-50)*(9-(h/10)) ...
+               + Params(2,1,i)*(37-d)*((h/10)-10) ...
+               + Params(1,1,i)*(d-50)*((h/10)-10));
+         
+       end
+   end
+end
+end
+
+%now to calculate the Lorentz peak spectra using this array of params.
+Qext_3D(105,41,121) = 0;
+
+for lambda = 
+
+%Now calculate the probability density function (2D gaussian)
+MeanX = 50;
+StdevX = 13;
+MeanY = 10;
+StdevY = 1;
+Gauss_2D(105,41) = 0;
+sum = 0;
+for x = 24:1:76
+    for y = 80:1:120
+        %create gaussian
+        Gauss_2D(x,y) = exp(-(((x-MeanX)^2)/(2*StdevX^2) + (((y/10)-MeanY)^2)/(2*StdevY^2)));
+        sum = sum + exp(-(((x-MeanX)^2)/(2*StdevX^2) + (((y/10)-MeanY)^2)/(2*StdevY^2)));
+    end
+end
+Gauss_2D = Gauss_2D./sum;
+
+%now implement the sum calculation:
+Qext_Cyl(121) = 0;
+for lambda = 1:1:121
+    for x = 24:1:76
+        for y = 80:1:120
+            %do your thing
+            Qext_Cyl(lambda) = Qext_Cyl(lambda) + Gauss_2D(x,y)*Qext_3D(x,y,lambda);
+        end
+    end
+end
+
+plot(wave,Qext_Cyl);

@@ -1,0 +1,19 @@
+function [peak] = GetROIs(spec, ROI_low, ROI_high)
+%GETROIS Summary of this function goes here
+%   Detailed explanation goes here
+%This is a function to get the ROI data as a vector from the input data.
+%The ROI is specified, and the data is corrected for (assumed linear)
+%background.
+lowVal = spec(ROI_low);
+highVal = spec(ROI_high);
+grad = (highVal - lowVal)/(ROI_high - ROI_low);
+intercept = highVal - grad*ROI_high; %from y = mx + b
+
+numPoints = ROI_high - ROI_low;
+
+x = ROI_low;
+
+for i = 1:numPoints
+    peak[i] = spec[x] - (grad*x + intercept);
+    x = x + 1;
+end
